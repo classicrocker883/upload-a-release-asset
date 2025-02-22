@@ -29,8 +29,7 @@ describe('Upload Release Asset', () => {
   let content;
 
   beforeAll(() => {
-    process.env.GITHUB_TOKEN =
-      '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';
+    process.env.GITHUB_TOKEN = 'token';
   });
 
   afterAll(() => {
