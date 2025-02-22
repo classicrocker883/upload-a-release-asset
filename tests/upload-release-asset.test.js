@@ -1,20 +1,41 @@
 jest.mock('@actions/core');
 jest.mock('@actions/github');
-jest.mock('fs');
+jest.mock('fs', () => {
+  const actualFs = jest.requireActual('fs');
+  return {
+    ...actualFs,
+    promises: {
+      ...actualFs.promises,
+      access: jest.fn(),
+      readFile: jest.fn().mockResolvedValue(Buffer.from('test content'))
+    },
+    statSync: jest.fn().mockReturnValueOnce({
+      size: 527
+    }),
+    readFileSync: jest.fn().mockReturnValueOnce(Buffer.from('test content')),
+    createReadStream: jest.fn().mockReturnValueOnce({
+      pipe: jest.fn()
+    })
+  };
+});
 
 const core = require('@actions/core');
 const { getOctokit, context } = require('@actions/github');
 const fs = require('fs');
 const run = require('../src/upload-release-asset');
 
-fs.promises = {
-  access: jest.fn(),
-  readFile: jest.fn().mockResolvedValue(Buffer.from('test content'))
-};
-
 describe('Upload Release Asset', () => {
   let uploadReleaseAsset;
   let content;
+
+  beforeAll(() => {
+    process.env.GITHUB_TOKEN =
+      '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';
+  });
+
+  afterAll(() => {
+    delete process.env.GITHUB_TOKEN;
+  });
 
   beforeEach(() => {
     uploadReleaseAsset = jest.fn().mockReturnValueOnce({
