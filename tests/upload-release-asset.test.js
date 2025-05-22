@@ -74,13 +74,16 @@ describe('Upload Release Asset', () => {
       .mockReturnValueOnce('asset_name')
       .mockReturnValueOnce('asset_content_type');
 
+    const mockStream = { pipe: jest.fn() };
+    fs.createReadStream = jest.fn().mockReturnValueOnce(mockStream);
+
     await run();
 
     expect(uploadReleaseAsset).toHaveBeenCalledWith({
       url: 'upload_url',
       headers: { 'content-type': 'asset_content_type', 'content-length': 527 },
       name: 'asset_name',
-      file: content
+      data: mockStream
     });
   });
 
@@ -121,5 +124,19 @@ describe('Upload Release Asset', () => {
     expect(uploadReleaseAsset).toHaveBeenCalled();
     expect(core.setFailed).toHaveBeenCalledWith('Error uploading release asset');
     expect(core.setOutput).toHaveBeenCalledTimes(0);
+  });
+
+  test('Fails when GITHUB_TOKEN is missing', async () => {
+    // --- remove token temporarily
+    const savedToken = process.env.GITHUB_TOKEN;
+    delete process.env.GITHUB_TOKEN;
+
+    core.setFailed = jest.fn();
+
+    await run();
+
+    expect(core.setFailed).toHaveBeenCalledWith('GITHUB_TOKEN is missing');
+
+    process.env.GITHUB_TOKEN = savedToken;
   });
 });
