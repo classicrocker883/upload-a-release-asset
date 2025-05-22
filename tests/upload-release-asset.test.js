@@ -12,7 +12,15 @@ jest.mock('fs', () => {
     statSync: jest.fn().mockReturnValueOnce({
       size: 527
     }),
-    readFileSync: jest.fn().mockReturnValueOnce(Buffer.from('test content')),
+    readFileSync: jest.fn((path, ...args) => {
+      if (path === 'asset_path') {
+        return Buffer.from('test content');
+      }
+      if (path === process.env.GITHUB_EVENT_PATH) {
+        return JSON.stringify({});
+      }
+      return actualFs.readFileSync(path, ...args);
+    }),
     createReadStream: jest.fn().mockReturnValueOnce({
       pipe: jest.fn()
     })
